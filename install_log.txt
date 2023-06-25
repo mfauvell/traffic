@@ -2,3 +2,4 @@ python3 -m venv traffic
 pip install jupyter
 pip install torch
 pip install pymongo
+python3 -m ipykernel install --user --name=traffic
