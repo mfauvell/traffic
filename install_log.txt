@@ -4,3 +4,4 @@ pip install torch
 pip install pymongo
 python3 -m ipykernel install --user --name=traffic
 pip install xmltodict
+pip install tqdm

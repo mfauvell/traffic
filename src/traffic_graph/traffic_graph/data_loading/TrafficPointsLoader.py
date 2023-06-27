@@ -1,6 +1,7 @@
 import csv
 import os
 import xmltodict
+from tqdm import tqdm
 
 
 def traffic_point_load_raw_data(basePath, mongoDb):
@@ -13,9 +14,11 @@ def traffic_point_load_raw_data(basePath, mongoDb):
     # Returns:
     #   A mongo collection with raw data
 
+    print("Loading raw traffic point data:\t")
     pathDir = basePath + '/traffic-points'
     trafficPointAuxCollection = mongoDb['traffic_points_aux']
-    for file in os.listdir(pathDir):
+    trafficPointAuxCollection.drop()
+    for file in tqdm(os.listdir(pathDir)):
         path = pathDir + '/' + file
         month = file[15:17]
         year = file[18:22]
@@ -38,9 +41,10 @@ def traffic_point_load_raw_data(basePath, mongoDb):
 
 
 def traffic_point_clean_unify_data(auxCollection, intesityDic, mongoDb, precission):
+    print("Clean and unify traffic point data:\t")
     trafficPointCollection = mongoDb['traffic_points']
-    for point_id in auxCollection.distinct("point_id"):
-        print(point_id)
+    trafficPointCollection.drop()
+    for point_id in tqdm(auxCollection.distinct("point_id")):
         pointData = auxCollection.find({"point_id": point_id}).sort(
             "year", -1).sort('month', -1)
         latitude = None
@@ -59,49 +63,74 @@ def traffic_point_clean_unify_data(auxCollection, intesityDic, mongoDb, precissi
             longitude = data['longitude']
             name = data['name']
             point_cod = data['point_cod']
-        intensity = -1
+        capacity = -1
         if (point_id in intesityDic):
-            intensity = intesityDic[point_id]['intensity']
+            capacity = intesityDic[point_id]['capacity']
         newPoint = {
             "point_id": point_id,
             "point_cod": point_cod,
             "name": name,
             "latitude": latitude,
             "longitude": longitude,
-            "intensity_max": intensity,
+            "capacity": capacity,
             "modified": modified
         }
         trafficPointCollection.insert_one(newPoint)
 
 
-def traffic_data_get_max_capacity(basePath, mongoDb):
+def traffic_point_get_max_capacity(basePath, mongoDb):
+    print("Calculate max capacity for each point from data collected:\t")
     pathDir = basePath + '/traffic-points-capacity'
     points = {}
-    for file in os.listdir(pathDir):
+    for file in tqdm(os.listdir(pathDir)):
         path = pathDir + '/' + file
-        print(path)
         with open(path) as file_obj:
             data = xmltodict.parse(file_obj.read())
             for element in data['pms']['pm']:
                 if ('intensidadSat' in element):
-                    intensity = element['intensidadSat']
+                    capacity = element['intensidadSat']
                 else:
-                    intensity = -1
+                    capacity = -1
                 point = {}
                 if (element['idelem'] in points):
                     point = points[element['idelem']]
-                    if (point['intensity'] != intensity):
+                    if (point['capacity'] != capacity):
                         point['changed'] = True
-                        if (point['intensity'] < intensity):
-                            point['intensity'] = intensity
-                    point['values'].append(intensity)
+                        if (point['capacity'] < capacity):
+                            point['capacity'] = capacity
+                    point['values'].append(capacity)
                 else:
                     point['point_id'] = element['idelem']
-                    point['intensity'] = intensity
+                    point['capacity'] = capacity
                     point['changed'] = False
-                    point['values'] = [intensity]
+                    point['values'] = [capacity]
                 points[element['idelem']] = point
-    collection = mongoDb['traffic_points_intensity']
+    collection = mongoDb['traffic_points_capacity']
+    collection.drop()
     for point in points:
         collection.insert_one(points[point])
     return points
+
+
+def traffic_point_load_measures(basePath, mongoDb):
+    print("Loading raw traffic measures data:\t")
+    pathDir = basePath + '/traffic-measures'
+    trafficMeasuresCollection = mongoDb['traffic_measures']
+    trafficMeasuresCollection.drop()
+    for file in tqdm(os.listdir(pathDir)):
+        path = pathDir + '/' + file
+        with open(path) as file_obj:
+            reader_obj = csv.DictReader(file_obj, delimiter=';')
+            meassures = []
+            for row in reader_obj:
+                if (row['tipo_elem'] == 'URB'):
+                    meassure = {}
+                    meassure['point_id'] = row['id']
+                    meassure['date'] = row['fecha']
+                    meassure['intensity'] = row['intensidad']
+                    meassure['occupation'] = row['ocupacion']
+                    meassure['vmid'] = row['vmed']
+                    meassure['error'] = row['error']
+                    meassures.append(meassure)
+            trafficMeasuresCollection.insert_many(meassures)
+    return trafficMeasuresCollection
