@@ -7,3 +7,5 @@ pip install xmltodict
 pip install tqdm
 pip install numpy
 pip install requests
+pip install pandas
+pip install dgl
