@@ -76,6 +76,7 @@ def traffic_point_clean_unify_data(auxCollection, intesityDic, mongoDb, precissi
             "modified": modified
         }
         trafficPointCollection.insert_one(newPoint)
+    auxCollection.drop()
 
 
 def traffic_point_get_max_capacity(basePath, mongoDb):
@@ -105,10 +106,6 @@ def traffic_point_get_max_capacity(basePath, mongoDb):
                     point['changed'] = False
                     point['values'] = [capacity]
                 points[element['idelem']] = point
-    collection = mongoDb['traffic_points_capacity']
-    collection.drop()
-    for point in points:
-        collection.insert_one(points[point])
     return points
 
 
