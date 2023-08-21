@@ -4,6 +4,7 @@ from tqdm import tqdm
 import calendar
 import copy
 import numpy
+import datetime
 
 def create_base_calendar(basePath, mongoDb):
     print("Creating base calendar:\t")
@@ -12,6 +13,8 @@ def create_base_calendar(basePath, mongoDb):
     calendarAuxCollection.drop()
     calendarCollection = mongoDb['calendar']
     calendarCollection.drop()
+    calendarCollection.create_index([("date", +1)])
+    calendarCollection.create_index([("yearMeteo", +1),("monthMeteo", +1),("dayMeteo", +1), ("hourMeteo", +1)])
     with open(filePath) as file_obj:
         reader_obj = csv.DictReader(file_obj, delimiter=';')
         for row in reader_obj:
@@ -64,6 +67,18 @@ def create_base_calendar(basePath, mongoDb):
                             moment['day'] = day[2]
                             moment['hour'] = hour
                             moment['minute'] = minute
+                            # For maake lookups with meteo_mesures
+                            moment['yearMeteo'] = year
+                            moment['monthMeteo'] = month
+                            moment['dayMeteo'] = day[2]
+                            moment['hourMeteo'] = hour
+                            if minute != "00":
+                                dateObject = datetime.datetime(year, month, day[2], hour)
+                                dateObject = dateObject + datetime.timedelta( hours = 1)
+                                moment['yearMeteo'] = dateObject.year
+                                moment['monthMeteo'] = dateObject.month
+                                moment['dayMeteo'] = dateObject.day
+                                moment['hourMeteo'] = dateObject.hour
                             moment['weekday'] = weekday
                             moment['day_type'] = day_type(weekday).item(0)
                             moment['season']= get_season(month, day[2]).item(0)
