@@ -4,7 +4,7 @@ from math import exp
 import copy
 import requests
 from tqdm import tqdm
-from .TrafficDataset import TrafficDataset
+from traffic_graph.traffic_graph.model import TrafficDataset
 
 def get_matrix_distances(selectedPoints, threshold = 10):
     print("Calculation matrix distances:\t")

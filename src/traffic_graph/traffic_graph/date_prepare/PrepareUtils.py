@@ -6,6 +6,8 @@ def prepare_selected(selectedPointsData, mongoDb):
     result = dict()
     preparedCollection = mongoDb['selected_points_prepared_data']
     preparedCollection.drop()
+    preparedCollection.create_index([("date", +1)])
+    preparedCollection.create_index([("point_id", +1)])
     for selectedPoint, dataPoint in tqdm(selectedPointsData.items()):
         result[selectedPoint] = dict()
         # Get raw data for point
@@ -22,10 +24,11 @@ def prepare_selected(selectedPointsData, mongoDb):
                 continue
             rawData = rawData | meteoData
             rawData['load'] = load
+            rawData['graph_id'] = dataPoint['graph_id']
             ## clean data
             rawData = clean_row(rawData)
             ## save to result
-            result[selectedPoint][rawData['date']] = rawData
+            # result[selectedPoint][rawData['date']] = rawData
             ## save to mongo
             preparedCollection.insert_one(rawData)
     return result
@@ -35,6 +38,7 @@ def clean_row(rawData):
     meteoIdMeasures = ['80','81','82','83','86','87','88','89']
     newRow = dict()
     newRow['point_id'] = rawData['point_id']
+    newRow['graph_id'] = rawData['graph_id']
     newRow['date'] = rawData['date']
     newRow['year'] = rawData['year']
     newRow['month'] = rawData['month']
