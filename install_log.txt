@@ -9,3 +9,4 @@ pip install numpy
 pip install requests
 pip install pandas
 pip install dgl
+pip install scikit-learn

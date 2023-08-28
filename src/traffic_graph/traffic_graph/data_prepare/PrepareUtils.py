@@ -1,5 +1,6 @@
 import copy
 from tqdm import tqdm
+import numpy as np
 import traffic_graph.traffic_graph as tg
 
 def prepare_selected(selectedPointsData, mongoDb):
@@ -64,7 +65,16 @@ def clean_row(rawData):
     for id in meteoIdMeasures:
         if id in rawData:
             newRow[tg.data_loading.get_name_of_measure_id(id)] = rawData[id]
+    if 'wind' in newRow and 'wind_direction' in newRow:
+        newRow['windx'], newRow['windy'] = convert_wind_columns(newRow['wind_direction'], newRow['wind'])
+        newRow.pop('wind_direction')
     return newRow
+
+def convert_wind_columns(direction, velocity):
+    wd_rad = direction * np.pi / 180
+    windx = velocity * np.cos(wd_rad)
+    windy = velocity * np.sin(wd_rad)
+    return (windx, windy)
 
 def calculate_load(capacity, intensity, ocupation):
     # C = Y + (1-Y) X TO where Y = intensity / capacity and TO = ocupation / 100
