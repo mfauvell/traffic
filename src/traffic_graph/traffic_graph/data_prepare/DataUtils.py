@@ -1,24 +1,30 @@
 import pandas as pd
 import numpy as np
 import traffic_graph.traffic_graph as tg
+# import pymongoarrow
+from pymongoarrow.monkey import patch_all
+from tqdm import tqdm
 
 def get_data_dataframes(config, selectedPoints, mongoDb):
+    patch_all()
     seq_len = config['seq_len']
     dates = pd.date_range(config['from_date'], config['to_date'], freq="15min")
     # for each point get df from mongodb
     rawDataCollection = mongoDb['selected_points_prepared_data']
     dataFramesPoints = dict()
     ## get raw data point into pandas dataframe and transform
-    for selectedPointId in selectedPoints:
-        rawData = rawDataCollection.find({"point_id": selectedPointId}).sort("date")
-        pandaDf = pd.DataFrame(list(rawData))
+    print('Get data into df:')
+    for selectedPointId in tqdm(selectedPoints):
+        pandaDf = rawDataCollection.find_pandas_all({"point_id": selectedPointId})
         pandaDf['date'] = pd.to_datetime(pandaDf['date'])
+        pandaDf.sort_values(by=['date'], inplace=True)
         ## Intersect dates of df with the generals to get the min
         dates = dates.intersection(pandaDf.date)
         dataFramesPoints[selectedPointId] = pandaDf
     # The explain to make a second iteration is why we need remove dates that is faulty row for some point
     # for each pont transfrom df
-    for selectedPointId in selectedPoints:
+    print('Transform data of df:')
+    for selectedPointId in tqdm(selectedPoints):
         pandaDf = dataFramesPoints[selectedPointId]
         ## remove data is not in dates
         pandaDf = pandaDf[pandaDf.date.isin(dates)]
@@ -29,14 +35,16 @@ def get_data_dataframes(config, selectedPoints, mongoDb):
     right_time_gaps = right_time_gaps.shift(-2 * seq_len).fillna(False).reset_index(drop=True)
     right_time_gaps = right_time_gaps[right_time_gaps].index.values
     n_rows = len(right_time_gaps)
-    n_features = dataFramesPoints[id].shape[1]
+    n_features = next(iter(dataFramesPoints.values())).shape[1]
     # Create Arrx (data to train) Arry (Data to predict) and RightData variables
     arrx = np.full((n_rows, seq_len, len(selectedPoints), n_features), np.nan)
     arry = np.full((n_rows, seq_len, len(selectedPoints), n_features), np.nan)
     # Combine all df in two df, one with X y other with Y
-    for id, df in dataFramesPoints.items():
-        graph_id = df.graph_id
+    print('Get final result:')
+    for id, df in tqdm(dataFramesPoints.items()):
+        graph_id = selectedPoints[id]
+        dfi = pd.DataFrame(df)
         for i, timestamp in enumerate(right_time_gaps):
-            arrx[i, :, graph_id, :] = df.iloc[timestamp:timestamp+seq_len]
-            arry[i, :, graph_id, :] = df.iloc[timestamp+seq_len:timestamp + 2*seq_len]
+            arrx[i, :, graph_id, :] = dfi.iloc[timestamp:timestamp+seq_len]
+            arry[i, :, graph_id, :] = dfi.iloc[timestamp+seq_len:timestamp + 2*seq_len]
     return (arrx, arry)

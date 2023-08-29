@@ -109,8 +109,8 @@ def preprocessing_transformer(config, target, interactions):
 
     if config["intensity"] != "drop":
         transformers.append(("intensity", config['intensity'], ["intensity"]))
-    if config["ocupation"] != "drop":
-        transformers.append(("ocupation", config['ocupation'], ["ocupation"]))
+    if config["occupation"] != "drop":
+        transformers.append(("occupation", config['occupation'], ["occupation"]))
     
     if config["rain"] != "drop":
         transformers.append(("rain", rain_transformer.get(config["rain"]), ["rain"]))
@@ -122,10 +122,10 @@ def preprocessing_transformer(config, target, interactions):
         transformers.append(("humidity", config["humidity"], ["humidity"]))
     if config["pressure"] != "drop":
         transformers.append(("pressure", config["pressure"], ["pressure"]))
-    if config["radiation_solar"] != "drop":
+    if config["radiation"] != "drop":
         transformers.append(("radiation", config["radiation"], ["solar_radiation"]))
-    if config["ultraviolete"] != "drop":
-        transformers.append(("ultraviolete", config["ultraviolete"], ["ultraviolete"]))
+    if config["ultraviolet"] != "drop":
+        transformers.append(("ultraviolet", config["ultraviolet"], ["ultraviolet"]))
 
     step1 = ColumnTransformer(transformers=transformers)
     return step1
@@ -161,7 +161,7 @@ def get_column_names(config, target):
     column_names += get_temp_column_names("minute", config["minute"])
     column_names += rain_columns[config["rain"]]
     column_names += wind_columns[config["wind"]]
-    column_names += [dim for dim in ["temperature", "humidity", "pressure", "solar_radiation"] if
+    column_names += [dim for dim in ["temperature", "humidity", "pressure", "radiation"] if
                     config[dim] == "passthrough"]
     return column_names
 
