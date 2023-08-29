@@ -45,6 +45,12 @@ season_transformer = dict(
     drop="drop"
 )
 
+day_type_transformer = dict(
+    one_hot=OneHotEncoder(handle_unknown="ignore", sparse=False),
+    ordinal=OrdinalEncoder(categories=[["mon-fri", "sat", "sun"]]),
+    drop="drop"
+)
+
 def get_rain_categories(rain):
     rain_intervals = [
         rain == 0,
@@ -94,12 +100,18 @@ def preprocessing_transformer(config, target, interactions):
         ("bool", OrdinalEncoder(categories=[[False, True]] * len(bool_columns)), bool_columns),
         ("year", temp_categorical("year", config["year"]), ["year"]),
         ("season", season_transformer.get(config["season"]), ["season"]),
+        ("day_type", day_type_transformer.get(config["day_type"]), ["day_type"]),
         ("month", temp_transformer(config["month"], period_dict["month"], "month"), ["month"]),
-        ("day_of_month", temp_transformer(config["day_of_month"], period_dict["day_of_month"], "day_of_month"), ["day_of_month"]),
+        ("day", temp_transformer(config["day"], period_dict["day"], "day"), ["day"]),
         ("weekday", temp_categorical("weekday", config["weekday"]), ["weekday"]),
         ("minute", temp_categorical("minute", config["minute"]), ["minute"]),
     ]
 
+    if config["intensity"] != "drop":
+        transformers.append(("intensity", config['intensity'], ["intensity"]))
+    if config["ocupation"] != "drop":
+        transformers.append(("ocupation", config['ocupation'], ["ocupation"]))
+    
     if config["rain"] != "drop":
         transformers.append(("rain", rain_transformer.get(config["rain"]), ["rain"]))
     if config["wind"] != "drop":
@@ -112,6 +124,8 @@ def preprocessing_transformer(config, target, interactions):
         transformers.append(("pressure", config["pressure"], ["pressure"]))
     if config["radiation_solar"] != "drop":
         transformers.append(("radiation", config["radiation"], ["solar_radiation"]))
+    if config["ultraviolete"] != "drop":
+        transformers.append(("ultraviolete", config["ultraviolete"], ["ultraviolete"]))
 
     step1 = ColumnTransformer(transformers=transformers)
     return step1
