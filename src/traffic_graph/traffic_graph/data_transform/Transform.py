@@ -54,13 +54,13 @@ day_type_transformer = dict(
 def get_rain_categories(rain):
     rain_intervals = [
         rain == 0,
-        rain < 2.5,
-        rain < 5,
-        rain < 10,
-        rain >= 15
+        (rain < 2.5) & (rain > 0),
+        (rain < 5) & (rain >= 2.5),
+        (rain < 10) & (rain >= 5),
+        rain >= 10
     ]
     rain_categories = [
-        "no_rain", "light_rain", "moderate_rain" "strong_rain", "torrential_rain"
+        "no_rain", "light_rain", "moderate_rain", "strong_rain", "torrential_rain"
     ]
     return np.select(rain_intervals, rain_categories, default="no_rain")
 
@@ -73,7 +73,7 @@ rain_one_hot = make_pipeline(
 
 rain_ordinal = make_pipeline(
     rain_categories_transformer,
-    OrdinalEncoder(categories=[["no_rain", "moderate_rain", "strong_rain"]]),
+    OrdinalEncoder(categories=[[ "no_rain", "light_rain", "moderate_rain", "strong_rain", "torrential_rain"]]),
 )
 
 rain_transformer = dict(
@@ -189,19 +189,6 @@ def get_temp_column_names(dimension, approach):
         for i in range(n_variables):
             names += [f"sin_{dimension}_{i+1}", f"cos_{dimension}_{i+1}"]
         return names
-    
-def get_rain_categories(rain):
-    rain_intervals = [
-        rain == 0,
-        rain < 2.5,
-        rain < 5,
-        rain < 10,
-        rain >= 15
-    ]
-    rain_categories = [
-        "no_rain", "light_rain", "moderate_rain" "strong_rain", "torrential_rain"
-    ]
-    return np.select(rain_intervals, rain_categories, default="no_rain")
 
 def hour_transformer(approach):
     if approach == "one_hot":

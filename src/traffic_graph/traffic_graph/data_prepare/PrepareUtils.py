@@ -2,28 +2,70 @@ import copy
 from tqdm import tqdm
 import numpy as np
 import traffic_graph.traffic_graph as tg
+from pymongoarrow.monkey import patch_all
+import pandas as pd
+from datetime import datetime, timedelta
+from scipy.interpolate import interp1d
 
 def prepare_selected(selectedPointsData, mongoDb):
-    result = dict()
+    patch_all()
     preparedCollection = mongoDb['selected_points_prepared_data']
     preparedCollection.drop()
     preparedCollection.create_index([("date", +1)])
     preparedCollection.create_index([("point_id", +1)])
-    for selectedPoint, dataPoint in tqdm(selectedPointsData.items()):
-        result[selectedPoint] = dict()
-        # Get raw data for point
-        dataMongoCursor = point_raw_data(selectedPoint, mongoDb)
-        # Foreach raw data
-        for rawData in dataMongoCursor:
-            # Calculate load
-            if (int(rawData['intensity']) > int(dataPoint['capacity'])):
+    pointDataframes = dict()
+    lastValue = dict()
+    trafficMeasuresCollection = mongoDb['traffic_measures']
+    for selectedPoint in tqdm(selectedPointsData):
+        pandaDf = point_raw_data(selectedPoint, mongoDb)
+        pandaDf['date'] = pd.to_datetime(pandaDf['date'])
+        pointDataframes[selectedPoint] = pandaDf
+        lastValue[selectedPoint] = dict()
+    limitTimestamp = datetime.strptime("2023-06-01 00:00:00", "%Y-%m-%d %H:%M:%S")
+    rawCalendar = calendar_with_meteo(mongoDb)
+    for calendar in tqdm(rawCalendar):
+        batchEntries = []
+        timestamp = datetime.strptime(calendar['date'], "%Y-%m-%d %H:%M:%S")
+        for selectedPoint, dataPoint in selectedPointsData.items():
+            actualValue = pointDataframes[selectedPoint].loc[pointDataframes[selectedPoint]['date'] == timestamp]
+            intensity = 0
+            occupation = 0
+            if (len(actualValue) > 0):
+                actualValue = actualValue.iloc[0]
+                if (len(lastValue[selectedPoint]) == 0):
+                    lastValue[selectedPoint] = actualValue
+                intensity = actualValue['intensity']
+                occupation = actualValue['occupation']
+            # Get Interpolate values
+            if (len(actualValue) == 0 and len(lastValue[selectedPoint]) > 0):
+                seekNextValue = True
+                index = 1
+                nextValue = dict()
+                #Get next date with value
+                timestampInside = copy.deepcopy(timestamp)
+                while seekNextValue and timestampInside < limitTimestamp:
+                    index = index + 1
+                    timestampInside = timestampInside + timedelta(minutes=15)
+                    nextValue = pointDataframes[selectedPoint].loc[pointDataframes[selectedPoint]['date'] == timestampInside]
+                    if (len(nextValue)>0):
+                        nextValue = nextValue.iloc[0]
+                        seekNextValue = False
+                if (len(nextValue) == 0):
+                    continue
+                intensity = interpolate(lastValue[selectedPoint]['intensity'], nextValue['intensity'], index)
+                occupation = interpolate(lastValue[selectedPoint]['occupation'], nextValue['occupation'], index)
+            if (int(intensity) > int(dataPoint['capacity'])):
                 continue
-            load = calculate_load(int(dataPoint['capacity']), int(rawData['intensity']), int(rawData['occupation']))
-            ## merge meteo_data
-            meteoData = get_meteo_data(rawData['meteoMeasures'], dataPoint['meteo_code_sorted'])
-            if (len(meteoData) < 1):
+            lastValue[selectedPoint] = actualValue
+            load = calculate_load(int(dataPoint['capacity']), int(intensity), int(occupation))
+            meteoData = get_meteo_data(calendar['meteoMeasures'], dataPoint['meteo_code_sorted'])
+            if (len(meteoData) < 5):
                 continue
-            rawData = rawData | meteoData
+            rawData = calendar | meteoData
+            rawData.pop('meteoMeasures')
+            rawData['point_id'] = dataPoint['point_id']
+            rawData['intensity'] = intensity
+            rawData['occupation'] = occupation
             rawData['load'] = load
             rawData['graph_id'] = dataPoint['graph_id']
             ## clean data
@@ -31,12 +73,24 @@ def prepare_selected(selectedPointsData, mongoDb):
             ## save to result
             # result[selectedPoint][rawData['date']] = rawData
             ## save to mongo
-            preparedCollection.insert_one(rawData)
-    return result
+            # preparedCollection.insert_one(rawData)
+            batchEntries.append(rawData)
+        if (len(batchEntries)> 0):
+            preparedCollection.insert_many(batchEntries)
+    #Get Calendar with Meteo points data
+    #For each selected point get raw_data into pandas
+    
+    return True
 
+def interpolate(firstValue, lastValue, index):
+    xs = [0,index]
+    ys = [firstValue,lastValue]
+    interp_func = interp1d(xs, ys)
+    return round(interp_func(1).item(),0)
 
 def clean_row(rawData):
-    meteoIdMeasures = ['80','81','82','83','86','87','88','89']
+    # meteoIdMeasures = ['80','81','82','83','86','87','88','89']
+    meteoIdMeasures = ['83','86','87','88','89']
     newRow = dict()
     newRow['point_id'] = rawData['point_id']
     newRow['graph_id'] = rawData['graph_id']
@@ -82,9 +136,68 @@ def calculate_load(capacity, intensity, ocupation):
     TO = ocupation / 100 
     return round( Y + (1 - Y) * TO, 2)
 
+def calendar_with_meteo(mongoDb):
+    pipeline = [
+        {
+            '$sort': {
+                'date': +1
+            }
+        }, {
+            '$match': {
+                '$or': [
+                    {
+                        '$and': [
+                            {
+                                'date': {
+                                    '$gt': '2021-06-21 00:00:00'
+                                }
+                            }, {
+                                'date': {
+                                    '$lt': '2023-06-01 00:00:00'
+                                }
+                            }
+                        ]
+                    }, {
+                        'date': {
+                            '$lt': '2020-03-14 00:00:00'
+                        }
+                    }
+                ]
+            }
+        }, {
+            '$lookup': {
+                'from': 'meteo_measures', 
+                'localField': 'date', 
+                'foreignField': 'date', 
+                'as': 'meteoMeasures'
+            }
+        }, {
+            '$addFields': {
+                'meteoMeasures': {
+                    '$arrayToObject': {
+                        '$map': {
+                            'input': '$meteoMeasures', 
+                            'in': {
+                                'k': {
+                                    '$toString': '$$this.code_station'
+                                }, 
+                                'v': '$$this'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+    return mongoDb['calendar'].aggregate(pipeline)
+
 def point_raw_data(point, mongoDb):
     pipeline = [
         {
+            '$sort': {
+                'date': +1
+            }
+        }, {
             '$match': {
                 '$and': [
                     {
@@ -108,67 +221,15 @@ def point_raw_data(point, mongoDb):
                     }
                 ]
             }
-        }, {
-            '$sort': {
-                'date': +1
-            }
-        }, {
-            '$lookup': {
-                'from': 'calendar', 
-                'localField': 'date', 
-                'foreignField': 'date', 
-                'pipeline': [
-                    {
-                        '$lookup': {
-                            'from': 'meteo_measures', 
-                            'localField': 'date', 
-                            'foreignField': 'date',
-                            'as': 'meteoMeasures'
-                        }
-                    }, {
-                        '$addFields': {
-                            'meteoMeasures': {
-                                '$arrayToObject': {
-                                    '$map': {
-                                        'input': '$meteoMeasures', 
-                                        'in': {
-                                            'k': {
-                                                '$toString': '$$this.code_station'
-                                            }, 
-                                            'v': '$$this'
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                ], 
-                'as': 'calendar'
-            }
-        }, {
-            '$replaceRoot': {
-                'newRoot': {
-                    '$mergeObjects': [
-                        '$$ROOT', {
-                            '$arrayElemAt': [
-                                '$calendar', 0
-                            ]
-                        }
-                    ]
-                }
-            }
-        }, {
-            '$unset': [
-                'tp', 'calendar'
-            ]
         }
     ]
-    return mongoDb['traffic_measures'].aggregate(pipeline)
+    return mongoDb['traffic_measures'].aggregate_pandas_all(pipeline)
 
 def get_meteo_data(rawData, pointsOrdered):
     result = dict()
     # create array of typeValues
-    typeValues = ["80", "81", "82", "83", "86", "87", "88", "89"]
+    # typeValues = ["80", "81", "82", "83", "86", "87", "88", "89"]
+    typeValues = ['83','86','87','88','89']
     meteoPoints = copy.deepcopy(pointsOrdered)
     while (len(meteoPoints) > 0 and len(typeValues) > 0):
         workingMeteoPoint = meteoPoints.pop(0)

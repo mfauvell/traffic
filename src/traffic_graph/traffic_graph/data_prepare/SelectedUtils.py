@@ -29,7 +29,15 @@ def get_selected_points(trafficDb):
         '$unset': [
             'tp', 'maxIntensity'
         ]
-    }
+    },
+    {
+        '$match': {
+            'tipus': {
+                '$eq': 'verd'
+            }
+        }
+    },
+    { '$limit' : 30 }
   ]
   selectedPointsCursor = trafficDb['selected_points'].aggregate(pipeline)
   selectedPoints = dict()

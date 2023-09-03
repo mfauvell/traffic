@@ -6,6 +6,11 @@ import requests
 from tqdm import tqdm
 from traffic_graph.traffic_graph.model import TrafficDataset
 
+def get_graph(selectedPoints, selectedPointsToIndex, threshold = 10, limitDistance = 0.01):
+    matrix = get_matrix_distances(selectedPoints, threshold)
+    weights = get_weigth_stack(matrix, limitDistance)
+    return create_graph_dataset(weights, selectedPointsToIndex)
+
 def get_matrix_distances(selectedPoints, threshold = 10):
     print("Calculation matrix distances:\t")
     # Get for each point the distances to others
@@ -56,7 +61,7 @@ def create_graph_dataset(weights, selectedPointToIndex):
     nodes_target = np.array(nodes_target)
     nodes_src_graph = np.array([selectedPointToIndex[x] for x in nodes_src])
     nodes_target_graph = np.array([selectedPointToIndex[x] for x in nodes_target])
-    return TrafficDataset(len(selectedPointToIndex), nodes_src_graph, nodes_target_graph, weights)
+    return TrafficDataset(len(selectedPointToIndex), nodes_src_graph, nodes_target_graph, weights)[0]
 
 def get_openroute_matrix_distances(origin, destinations):
     url = 'http://openroute.local/ors/v2/matrix/driving-car'
