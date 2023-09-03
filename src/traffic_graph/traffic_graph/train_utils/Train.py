@@ -9,12 +9,19 @@ import numpy as np
 batch_cnt = [0]
 
 def make_train(arrx, arry, graph, time_gaps, dates, train_time, config):
+    print('Starting Train')
+    print('Train until: ' + train_time)
     device = get_device(config)
     arrxTrain, arryTrain, arrxTest, arryTest = tg.data_prepare.get_train_test_arrays(arrx, arry, time_gaps, dates, train_time, config)
     trainDataset = tg.model.SnapShotDataset(arrxTrain, arryTrain)
     testDataset = tg.model.SnapShotDataset(arrxTest, arryTest)
     trainLoader = DataLoader(trainDataset, batch_size=config['batch_size'], num_workers=config['num_workers'], shuffle=True)
     testLoader = DataLoader(testDataset, batch_size=config['batch_size'], num_workers=config['num_workers'], shuffle=True)
+    print("Shape of train_x:", trainDataset.x.shape)
+    print("Shape of train_y:", trainDataset.y.shape)
+    print("Shape of test_x:", testDataset.x.shape)
+    print("Shape of test_y:", testDataset.y.shape)
+
     seq_len = trainDataset.x.shape[1]
     in_feats = trainDataset.x.shape[-1]
     normalizer = tg.model.NormalizationLayer(trainDataset.min, trainDataset.max)

@@ -7,6 +7,7 @@ from pymongoarrow.monkey import patch_all
 from tqdm import tqdm
 
 def get_data_dataframes(config, selectedPoints, mongoDb):
+    print('Obtain dataframes:')
     patch_all()
     seq_len = config['seq_len']
     dates = pd.date_range(config['from_date'], config['to_date'], freq="15min")
@@ -48,22 +49,19 @@ def get_data_dataframes(config, selectedPoints, mongoDb):
         for i, timestamp in enumerate(right_time_gaps):
             arrx[i, :, graph_id, :] = dfi.iloc[timestamp:timestamp+seq_len]
             arry[i, :, graph_id, :] = dfi.iloc[timestamp+seq_len:timestamp + 2*seq_len]
-            
+    print('Finished obtain dataframes.')            
     return (arrx, arry, right_time_gaps, dates)
 
 def get_train_test_arrays(arrx, arry, right_time_gaps, dates, train_date, config):
-    print(arrx.shape[0])
     train_date = datetime.strptime(train_date, "%Y-%m-%d %H:%M:%S")
     dates_train = (dates.to_series().reset_index(drop=True) <= train_date)
     train_index = np.intersect1d(dates_train[dates_train].index.values, right_time_gaps)
     train_data_size = len(train_index)
-    print(train_data_size)
     limitTest = train_date + timedelta(days=30)
-    print(limitTest.strftime("%Y-%m-%d %H:%M:%S"))
+    print("Test until: " + limitTest.strftime("%Y-%m-%d %H:%M:%S"))
     dates_test = (dates.to_series().reset_index(drop=True) > train_date) & (dates.to_series().reset_index(drop=True) <= limitTest)
     test_index = np.intersect1d(dates_test[dates_test].index.values, right_time_gaps)
     test_data_size = len(test_index)
-    print(test_data_size)
 
     return (arrx[:train_data_size], arry[:train_data_size], arrx[train_data_size:train_data_size + test_data_size], arry[train_data_size:train_data_size + test_data_size])
 

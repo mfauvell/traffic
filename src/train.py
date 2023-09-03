@@ -50,6 +50,18 @@ config = dict(
     rain = 'passthrough',
 )
 
+dataset_name = "ff"
+#foreach config
+#Create name of datacreation
+#save config
+#save graph
+#save dataframes
+##foreach make train
+## save datasets
+### foreach epoch
+### save model
+### save mae and mes
+
 #Get selected points
 (selectedPoints, selectedPointsToIndex, _) = tg.data_prepare.get_selected_points(trafficDb)
 #Create graph

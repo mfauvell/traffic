@@ -7,9 +7,12 @@ from tqdm import tqdm
 from traffic_graph.traffic_graph.model import TrafficDataset
 
 def get_graph(selectedPoints, selectedPointsToIndex, threshold = 10, limitDistance = 0.01):
+    print('Crating graph:')
     matrix = get_matrix_distances(selectedPoints, threshold)
     weights = get_weigth_stack(matrix, limitDistance)
-    return create_graph_dataset(weights, selectedPointsToIndex)
+    graph = create_graph_dataset(weights, selectedPointsToIndex)
+    print('Created graph')
+    return graph
 
 def get_matrix_distances(selectedPoints, threshold = 10):
     print("Calculation matrix distances:\t")
