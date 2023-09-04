@@ -27,27 +27,31 @@ def get_matrix_distances(selectedPoints, threshold = 10):
     distances = pd.DataFrame(index=list(selectedPoints.keys()),
                              columns=list(selectedPoints.keys()))
     for selectedPoint in tqdm(selectedPoints):
-        selectedPointDistances = copy.deepcopy(pointsDistances[selectedPoint])
-        while len(selectedPointDistances) > 0:
-            # get less distance point and add to matrix until there aren't any more points
-            minPoint = min(selectedPointDistances, key=selectedPointDistances.get)
-            minDistance = selectedPointDistances[minPoint]
-            distances.loc[selectedPoint, minPoint] = minDistance
-            selectedPointDistances.pop(minPoint)
-            #check all others points to not add
-            actualSelectedPointDistancesKeys = list(selectedPointDistances.keys())
-            for additionalPoint in actualSelectedPointDistancesKeys:
-                # Pass for minpoint
-                if (round(selectedPointDistances[additionalPoint],2) == round(minDistance + pointsDistances[minPoint][additionalPoint], 2)):
-                    calculatedDistance = round(get_openroute_distance_between_two_points(
-                        selectedPoints[selectedPoint],
-                        selectedPoints[additionalPoint], 
-                        selectedPoints[minPoint]
-                        ),2)
-                    limit = round(selectedPointDistances[additionalPoint] + (selectedPointDistances[additionalPoint] * (threshold/100)),2)
-                    if (calculatedDistance <= limit):
-                        distances.loc[selectedPoint, additionalPoint] = calculatedDistance
-                    selectedPointDistances.pop(additionalPoint)
+        if (threshold == -1):
+            for nextPoint, distance in pointsDistances[selectedPoint].items():
+                distances.loc[selectedPoint, nextPoint] = distance
+        else:
+            selectedPointDistances = copy.deepcopy(pointsDistances[selectedPoint])
+            while len(selectedPointDistances) > 0:
+                # get less distance point and add to matrix until there aren't any more points
+                minPoint = min(selectedPointDistances, key=selectedPointDistances.get)
+                minDistance = selectedPointDistances[minPoint]
+                distances.loc[selectedPoint, minPoint] = minDistance
+                selectedPointDistances.pop(minPoint)
+                #check all others points to not add
+                actualSelectedPointDistancesKeys = list(selectedPointDistances.keys())
+                for additionalPoint in actualSelectedPointDistancesKeys:
+                    # Pass for minpoint
+                    if (round(selectedPointDistances[additionalPoint],2) == round(minDistance + pointsDistances[minPoint][additionalPoint], 2)):
+                        calculatedDistance = round(get_openroute_distance_between_two_points(
+                            selectedPoints[selectedPoint],
+                            selectedPoints[additionalPoint], 
+                            selectedPoints[minPoint]
+                            ),2)
+                        limit = round(selectedPointDistances[additionalPoint] + (selectedPointDistances[additionalPoint] * (threshold/100)),2)
+                        if (calculatedDistance <= limit):
+                            distances.loc[selectedPoint, additionalPoint] = calculatedDistance
+                        selectedPointDistances.pop(additionalPoint)
     return distances
 
 def get_weigth_stack(matrix, weight_threshold):

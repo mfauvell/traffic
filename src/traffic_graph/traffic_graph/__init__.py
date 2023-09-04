@@ -4,3 +4,4 @@ from . import data_prepare
 from . import model
 from . import data_transform
 from . import train_utils
+from . import config
