@@ -37,7 +37,7 @@ def get_selected_points(trafficDb):
             }
         }
     },
-    { '$limit' : 30 }
+    { '$limit' : 50 }
   ]
   selectedPointsCursor = trafficDb['selected_points'].aggregate(pipeline)
   selectedPoints = dict()

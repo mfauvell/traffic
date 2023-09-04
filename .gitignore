@@ -8,3 +8,4 @@ pyvenv.cfg
 __pycache__/
 src/data/*
 !src/data/README.md
+src/results/*

@@ -6,9 +6,11 @@ import dgl
 import torch
 import torch.nn as nn
 import numpy as np
+from matplotlib import pyplot as plt
+import pickle
 batch_cnt = [0]
 
-def make_train(arrx, arry, graph, time_gaps, dates, train_time, config):
+def make_train(arrx, arry, graph, time_gaps, dates, train_time, config, path):
     print('Starting Train')
     print('Train until: ' + train_time)
     device = get_device(config)
@@ -53,38 +55,35 @@ def make_train(arrx, arry, graph, time_gaps, dates, train_time, config):
         test_maes.append(test_mae)
         test_mses.append(test_mse)
 
-        # fig, ax = plt.subplots(figsize=(14, 4))
-        # ax.plot(train_maes, label="train")
-        # ax.plot(test_maes, label="test")
-        # plt.legend()
-        # plt.savefig(f"{training_folder}/learning_curve_mae.svg")
-        # plt.close(fig)
+        fig, ax = plt.subplots(figsize=(14, 4))
+        ax.plot(train_maes, label="train")
+        ax.plot(test_maes, label="test")
+        plt.legend()
+        plt.savefig(f"{path}/learning_curve_mae.svg")
+        plt.close(fig)
 
-        # fig, ax = plt.subplots(figsize=(14, 4))
-        # ax.plot(train_mses, label="train")
-        # ax.plot(test_mses, label="test")
-        # plt.legend()
-        # plt.savefig(f"{training_folder}/learning_curve_mse.svg")
-        # plt.close(fig)
+        fig, ax = plt.subplots(figsize=(14, 4))
+        ax.plot(train_mses, label="train")
+        ax.plot(test_mses, label="test")
+        plt.legend()
+        plt.savefig(f"{path}/learning_curve_mse.svg")
+        plt.close(fig)
 
         ### save model
-        #TODO:
-        # torch.save(dcrnn.state_dict(), f"{training_folder}/model{e}.pt")
+        torch.save(dcrnn.state_dict(), f"{path}/model{e}.pt")
 
-        if len(train_maes) >= 5:
-            if all([train_mae > previous_mae for previous_mae in train_maes[-5:-1]]):
+        if len(train_maes) >= 3:
+            if all([train_mae > previous_mae for previous_mae in train_maes[-3:-1]]):
                 break
-            if all([train_mse > previous_mse for previous_mse in train_mses[-5:-1]]):
+            if all([train_mse > previous_mse for previous_mse in train_mses[-3:-1]]):
                 break
 
     print("Training finished")
     # save mae and mes
-    #TODO:
-    # os.mkdir(f"{training_folder}/losses")
-    # with open(f"{training_folder}/losses/train.pkl", "wb") as f:
-    #     pickle.dump(train_maes, f)
-    # with open(f"{training_folder}/losses/test.pkl", "wb") as f:
-    #     pickle.dump(test_mses, f)
+    with open(f"{path}/loss_train.pkl", "wb") as f:
+        pickle.dump(train_maes, f)
+    with open(f"{path}/loss_test.pkl", "wb") as f:
+        pickle.dump(test_mses, f)
 
     return dcrnn
     

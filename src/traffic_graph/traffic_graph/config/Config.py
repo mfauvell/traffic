@@ -1,7 +1,7 @@
 import copy
 
 base_model_config = dict(
-    batch_size=256,
+    batch_size=192,
     num_workers=0,
     seq_len = 16,
     diffsteps = 2,
@@ -19,7 +19,7 @@ base_model_config = dict(
     to_date = '2023-06-01 00:00:00',
     test_days_gap=30,
     graph_threshold = 10,
-    graph_limit_distance = 0.01
+    graph_limit_distance = 0
 )
 base_temporal_features = dict(
     year = 'passthrough',
@@ -63,28 +63,18 @@ def get_configs_graphs_study():
     config1 = copy.deepcopy(config)
     config1['graph_threshold'] = 0
     config2 = copy.deepcopy(config)
-    config2['graph_threshold'] = 10
+    config2['graph_threshold'] = 5
     config3 = copy.deepcopy(config)
-    config3['graph_threshold'] = 25
+    config3['graph_threshold'] = 10
     config4 = copy.deepcopy(config)
-    config4['graph_threshold'] = 50
+    config4['graph_threshold'] = -1
+    config4['graph_limit_distance'] = 0.05
     config5 = copy.deepcopy(config)
-    config5['graph_threshold'] = 100
+    config5['graph_threshold'] = -1
+    config5['graph_limit_distance'] = 0.1
     config6 = copy.deepcopy(config)
     config6['graph_threshold'] = -1
-    config6['graph_limit_distance'] = 0.1
-    config7 = copy.deepcopy(config)
-    config7['graph_threshold'] = -1
-    config7['graph_limit_distance'] = 0.2
-    config8 = copy.deepcopy(config)
-    config8['graph_threshold'] = -1
-    config8['graph_limit_distance'] = 0.3
-    config9 = copy.deepcopy(config)
-    config9['graph_threshold'] = -1
-    config9['graph_limit_distance'] = 0.4
-    config10 = copy.deepcopy(config)
-    config10['graph_threshold'] = -1
-    config10['graph_limit_distance'] = 0.5
+    config6['graph_limit_distance'] = 0.15
     return dict(
         c1 = config1,
         c2 = config2,
@@ -92,8 +82,4 @@ def get_configs_graphs_study():
         c4 = config4,
         c5 = config5,
         c6 = config6,
-        c7 = config7,
-        c8 = config8,
-        c9 = config9,
-        c10 = config10
     )   

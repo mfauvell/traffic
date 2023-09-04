@@ -2,6 +2,9 @@ import pymongo
 import traffic_graph.traffic_graph as tg
 import datetime
 import pandas as pd
+import pickle
+import os
+import dgl
 
 mongoClient = pymongo.MongoClient("mongodb://root:root@localhost:27017/")
 trafficDb = mongoClient['traffic']
@@ -10,24 +13,33 @@ trafficDb = mongoClient['traffic']
 #Get selected points
 (selectedPoints, selectedPointsToIndex, _) = tg.data_prepare.get_selected_points(trafficDb)
 configs = tg.config.get_configs_graphs_study()
-dataset_name = "graphStudy_" + datetime.datetime.strftime("%Y%m%d%H%M%S")
-basepath = ''
+now = datetime.datetime.now()
+dataset_name = "graphStudy_" + now.strftime("%Y%m%d%H%M%S")
+basepath = 'results/'+dataset_name
+if not os.path.exists(basepath):
+    os.mkdir(basepath)
 #foreach config
 for name, config in configs.items():
     #Crate directory por config
-    #TODO:
+    training_basepath = basepath + "/" + name
+    if not os.path.exists(training_basepath):
+        os.mkdir(training_basepath)
     #save config
-    #TODO:
+    with open(f"{training_basepath}/learning_args.pkl", "wb") as f:
+        pickle.dump(config, f)
     #Create graph
     graph = tg.graph_utils.get_graph(selectedPoints, selectedPointsToIndex, config['graph_threshold'], config['graph_limit_distance'])
     #save graph
-    #TODO:
+    dgl.save_graphs(f"{training_basepath}/graph.bin", [graph])
     #Get base data
     arrx, arry, time_gaps, dates = tg.data_prepare.get_data_dataframes(config, selectedPointsToIndex, trafficDb)
     #save dataframes
-    #TODO:
-    for train_time in pd.date_range("2022-08-1", "2023-05-31", freq="1M"):
-        tg.train_utils.make_train(arrx, arry, graph, time_gaps, dates, train_time, config)
+    #TODO: For now no save this, we can recreate from data
+    for train_time in pd.date_range("2022-07-1", "2023-06-30", freq="1M"):
+        path = training_basepath + "/" + train_time.strftime("%Y%m%d%H%M%S")
+        if not os.path.exists(path):
+            os.mkdir(path)
+        tg.train_utils.make_train(arrx, arry, graph, time_gaps, dates, train_time.strftime("%Y-%m-%d %H:%M:%S"), config, path)
 
 
 

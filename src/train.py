@@ -6,7 +6,7 @@ trafficDb = mongoClient['traffic']
 # Get Config of algorythm and columns
 # TODO:
 config = dict(
-    batch_size=256,
+    batch_size=192,
     num_workers=0,
     target="load",
     seq_len = 16,
