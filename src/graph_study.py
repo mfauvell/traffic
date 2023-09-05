@@ -39,8 +39,10 @@ for name, config in configs.items():
         path = training_basepath + "/" + train_time.strftime("%Y%m%d%H%M%S")
         if not os.path.exists(path):
             os.mkdir(path)
-        tg.train_utils.make_train(arrx, arry, graph, time_gaps, dates, train_time.strftime("%Y-%m-%d %H:%M:%S"), config, path)
-
+        try:
+            tg.train_utils.make_train(arrx, arry, graph, time_gaps, dates, train_time.strftime("%Y-%m-%d %H:%M:%S"), config, path)
+        except Exception as err:
+            print(f"Unexpected {err=}, {type(err)=}")
 
 
 
