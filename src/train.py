@@ -8,57 +8,9 @@ import pandas as pd
 
 mongoClient = pymongo.MongoClient("mongodb://root:root@localhost:27017/")
 trafficDb = mongoClient['traffic']
-# Get Config of algorythm and columns
-# TODO:
-config = dict(
-    batch_size=192,
-    num_workers=0,
-    target="load",
-    seq_len = 16,
-    diffsteps = 2,
-    direction = "both",
-    out_feats = 64,
-    num_layers = 2,
-    decay_steps = 2000,
-    lr=0.01,
-    gpu = 1,
-    minimum_lr=2e-6,
-    epochs=20,
-    max_grad_norm=5.0,
-    from_date = '2019-01-01 00:00:00',
-    to_date = '2023-06-01 00:00:00',
-    test_days_gap=30,
-    year = 'passthrough',
-    month = 'passthrough',
-    day = 'passthrough',
-    hour = 'passthrough',
-    minute = 'passthrough',
-    weekday = 'passthrough',
-    day_type = 'drop',
-    season = 'drop',
-    prematch = 'passthrough',
-    match = 'passthrough',
-    postmatch = 'passthrough',
-    bank_holiday = 'passthrough',
-    work_office_day = 'passthrough',
-    school_day = 'passthrough',
-    school_holiday = 'passthrough',
-    state_of_alarm = 'passthrough',
-    intensity = 'passthrough',
-    occupation = 'passthrough',
-    ultraviolet = 'drop',
-    wind = 'drop',
-    temperature = 'passthrough',
-    humidity = 'passthrough',
-    pressure = 'passthrough',
-    radiation = 'passthrough',
-    rain = 'passthrough',
-)
-
 #Get selected points
 (selectedPoints, selectedPointsToIndex, _) = tg.data_prepare.get_selected_points(trafficDb)
-# configs = tg.config.get_configs_train()
-configs = dict(c1 = config)
+configs = tg.config.get_configs_train()
 now = datetime.datetime.now()
 dataset_name = "train_" + now.strftime("%Y%m%d%H%M%S")
 basepath = 'results/'+dataset_name

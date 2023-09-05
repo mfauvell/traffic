@@ -31,6 +31,16 @@ base_temporal_features = dict(
     day_type = 'drop',
     season = 'drop'
 )
+drop_temporal_features = dict(
+    year = 'drop',
+    month = 'drop',
+    day = 'drop',
+    hour = 'drop',
+    minute = 'drop',
+    weekday = 'drop',
+    day_type = 'drop',
+    season = 'drop'
+)
 base_calendar_features = dict(
     prematch = 'passthrough',
     match = 'passthrough',
@@ -41,9 +51,23 @@ base_calendar_features = dict(
     school_holiday = 'passthrough',
     state_of_alarm = 'passthrough'
 )
+drop_calendar_features = dict(
+    prematch = 'drop',
+    match = 'drop',
+    postmatch = 'drop',
+    bank_holiday = 'drop',
+    work_office_day = 'drop',
+    school_day = 'drop',
+    school_holiday = 'drop',
+    state_of_alarm = 'drop'
+)
 base_traffic_features = dict(
     intensity = 'passthrough',
     occupation = 'passthrough'
+)
+drop_traffic_features = dict(
+    intensity = 'drop',
+    occupation = 'drop'
 )
 base_meteo_features = dict(
     ultraviolet = 'drop',
@@ -54,8 +78,24 @@ base_meteo_features = dict(
     radiation = 'passthrough',
     rain = 'passthrough',
 )
+drop_meteo_features = dict(
+    ultraviolet = 'drop',
+    wind = 'drop',
+    temperature = 'drop',
+    humidity = 'drop',
+    pressure = 'drop',
+    radiation = 'drop',
+    rain = 'drop',
+)
 
-
+def get_configs_train():
+    return dict(
+        c1 = base_model_config | drop_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features,
+        c2 = base_model_config | base_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features,
+        c3 = base_model_config | drop_temporal_features | base_calendar_features | drop_traffic_features |drop_meteo_features,
+        c4 = base_model_config | drop_temporal_features | drop_calendar_features | base_traffic_features |drop_meteo_features,
+        c5 = base_model_config | drop_temporal_features | drop_calendar_features | drop_traffic_features |base_meteo_features,
+    )
 
 def get_configs_graphs_study():
     config = base_model_config | base_temporal_features | base_calendar_features | base_traffic_features | base_meteo_features
