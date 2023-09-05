@@ -33,7 +33,7 @@ for name, config in configs.items():
     arrx, arry, time_gaps, dates = tg.data_prepare.get_data_dataframes(config, selectedPointsToIndex, trafficDb)
     #save dataframes
     #TODO: For now no save this, we can recreate from data
-    for train_time in pd.date_range("2022-07-1", "2023-06-30", freq="1M"):
+    for train_time in pd.date_range("2022-07-01", "2023-04-30", freq="1M"):
         path = training_basepath + "/" + train_time.strftime("%Y%m%d%H%M%S")
         if not os.path.exists(path):
             os.mkdir(path)
@@ -41,7 +41,8 @@ for name, config in configs.items():
             tg.train_utils.make_train(arrx, arry, graph, time_gaps, dates, train_time.strftime("%Y-%m-%d %H:%M:%S"), config, path)
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
-
+    del arrx
+    del arry
 
 
 
