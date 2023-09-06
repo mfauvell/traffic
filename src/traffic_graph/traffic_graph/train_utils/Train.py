@@ -37,7 +37,7 @@ def make_train(arrx, arry, graph, time_gaps, dates, train_time, config, path):
         num_layers=config['num_layers'],
         net=net,
         decay_steps=config['decay_steps']).to(device)
-    # reset_parameters(dcrnn)
+    reset_parameters(dcrnn)
     optimizer = torch.optim.Adam(dcrnn.parameters(), lr=config['lr'])
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
     loss_fn = masked_mae_loss
