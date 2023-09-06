@@ -98,7 +98,7 @@ def get_configs_train():
     )
 
 def get_configs_graphs_study():
-    config = base_model_config | base_temporal_features | base_calendar_features | base_traffic_features | base_meteo_features
+    config = base_model_config | base_temporal_features | base_calendar_features | drop_traffic_features | base_meteo_features
     config['epochs'] = 10
     config1 = copy.deepcopy(config)
     config1['graph_threshold'] = 0

@@ -78,6 +78,8 @@ def make_train(arrx, arry, graph, time_gaps, dates, train_time, config, path):
             if all([train_mse > previous_mse for previous_mse in train_mses[-3:-1]]):
                 break
 
+    del optimizer
+    del scheduler
     print("Training finished")
     # save mae and mes
     with open(f"{path}/loss_train.pkl", "wb") as f:
