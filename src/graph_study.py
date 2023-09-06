@@ -6,6 +6,7 @@ import pickle
 import os
 import dgl
 import copy
+import torch
 
 mongoClient = pymongo.MongoClient("mongodb://root:root@localhost:27017/")
 trafficDb = mongoClient['traffic']
@@ -45,6 +46,7 @@ for name, config in configs.items():
             dcrnn = tg.train_utils.make_train(arrx, arry, iterationGraph, time_gaps, dates, train_time.strftime("%Y-%m-%d %H:%M:%S"), config, path)
             del dcrnn
             del iterationGraph
+            torch.cuda.empty_cache()
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
     del arrx

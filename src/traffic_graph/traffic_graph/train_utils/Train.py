@@ -37,6 +37,7 @@ def make_train(arrx, arry, graph, time_gaps, dates, train_time, config, path):
         num_layers=config['num_layers'],
         net=net,
         decay_steps=config['decay_steps']).to(device)
+    # reset_parameters(dcrnn)
     optimizer = torch.optim.Adam(dcrnn.parameters(), lr=config['lr'])
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
     loss_fn = masked_mae_loss
@@ -80,6 +81,9 @@ def make_train(arrx, arry, graph, time_gaps, dates, train_time, config, path):
 
     del optimizer
     del scheduler
+    del net
+    del out_gs
+    del in_gs
     print("Training finished")
     # save mae and mes
     with open(f"{path}/loss_train.pkl", "wb") as f:
@@ -183,3 +187,9 @@ def get_device(config):
         print('Using CPU')
         device = torch.device('cpu')
     return device
+
+def reset_parameters(model):
+    for layer in model.children():
+        if hasattr(layer, 'reset_parameters'):
+            print('holy shit')
+            layer.reset_parameters()
