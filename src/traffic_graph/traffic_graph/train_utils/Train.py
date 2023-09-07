@@ -40,6 +40,9 @@ def make_train(arrx, arry, graph, time_gaps, dates, train_time, config, path):
     reset_parameters(dcrnn)
     optimizer = torch.optim.Adam(dcrnn.parameters(), lr=config['lr'])
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
+    #Save state of optimizer and model
+    stateModel = dcrnn.state_dict()
+    stateOptim = optimizer.state_dict()
     loss_fn = masked_mae_loss
     train_maes = []
     train_mses = []
@@ -78,7 +81,9 @@ def make_train(arrx, arry, graph, time_gaps, dates, train_time, config, path):
                 break
             if all([train_mse > previous_mse for previous_mse in train_mses[-3:-1]]):
                 break
-
+    optimizer.load_state_dict(stateOptim)
+    dcrnn.load_state_dict(stateModel)
+    dcrnn.to(device)
     del optimizer
     del scheduler
     del net
