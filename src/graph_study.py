@@ -44,9 +44,9 @@ for name, config in configs.items():
         try:
             iterationGraph = copy.deepcopy(graph)
             dcrnn = tg.train_utils.make_train(arrx, arry, iterationGraph, time_gaps, dates, train_time.strftime("%Y-%m-%d %H:%M:%S"), config, path)
-            del dcrnn
-            del iterationGraph
-            torch.cuda.empty_cache()
+            # del dcrnn
+            # del iterationGraph
+            # torch.cuda.empty_cache()
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
     del arrx

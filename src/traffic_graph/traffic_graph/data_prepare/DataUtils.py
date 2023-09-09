@@ -5,6 +5,7 @@ from datetime import timedelta, datetime
 # import pymongoarrow
 from pymongoarrow.monkey import patch_all
 from tqdm import tqdm
+import math
 
 def get_data_dataframes(config, selectedPoints, mongoDb):
     print('Obtain dataframes:')
@@ -65,3 +66,47 @@ def get_train_test_arrays(arrx, arry, right_time_gaps, dates, train_date, config
 
     return (arrx[:train_data_size], arry[:train_data_size], arrx[train_data_size:train_data_size + test_data_size], arry[train_data_size:train_data_size + test_data_size])
 
+def get_train_test_arrays_alt(arrx, arry, fold, config):
+    size, _, _, _ = arrx.shape
+    base_size = math.floor(size / 10)
+    if (fold == 0):
+        return (arrx[base_size:], arry[base_size:], arrx[:base_size], arry[:base_size])
+    elif (fold==9):
+        return (arrx[:base_size*9], arry[:base_size*9], arrx[base_size*9:], arry[base_size*9:])
+    else:
+        first_segment_x = arrx[:base_size*fold]
+        first_segment_y = arry[:base_size*fold]
+        second_segment_x = arrx[base_size*(fold + 1):]
+        second_segment_y = arry[base_size*(fold + 1):]
+        return (
+            np.concatenate((first_segment_x, second_segment_x), axis = 0),
+            np.concatenate((first_segment_y, second_segment_y), axis = 0),
+            arrx[base_size*fold:base_size*(fold+1)],
+            arry[base_size*fold:base_size*(fold+1)]
+        )
+    
+
+    # return (arrx[:train_data_size], arry[:train_data_size], arrx[train_data_size:train_data_size + test_data_size], arry[train_data_size:train_data_size + test_data_size])
+
+def get_training_date_from_fold(fold):
+    match fold:
+        case 0:
+            return '2022-08-01 00:00:00'
+        case 1:
+            return '2022-09-01 00:00:00'
+        case 2:
+            return '2022-10-01 00:00:00'
+        case 3:
+            return '2022-11-01 00:00:00'
+        case 4:
+            return '2022-12-01 00:00:00'
+        case 5:
+            return '2023-01-01 00:00:00'
+        case 6:
+            return '2023-02-01 00:00:00'
+        case 7:
+            return '2023-03-01 00:00:00'
+        case 8:
+            return '2023-04-01 00:00:00'
+        case 9:
+            return '2023-05-01 00:00:00'
