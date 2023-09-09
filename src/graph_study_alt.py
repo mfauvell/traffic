@@ -18,7 +18,7 @@ now = datetime.datetime.now()
 with open(logPath, 'a') as f:
     f.write('Initiating Training: ' + iterationName + '\n')
     f.write('Time: ' + now.strftime("%Y-%m-%d %H:%M:%S") +' \n')
-    f.write('Config: ' + configId + ' Fold: ' + str(fold) + 'Time: ' + tg.data_prepare.get_training_date_from_fold(fold) +'\n')
+    f.write('Config: ' + configId + ' Fold: ' + str(fold) + ' Time: ' + tg.data_prepare.get_training_date_from_fold(fold) +'\n')
 #Get selected points
 (selectedPoints, selectedPointsToIndex, _) = tg.data_prepare.get_selected_points(trafficDb)
 configs = tg.config.get_configs_graphs_study()

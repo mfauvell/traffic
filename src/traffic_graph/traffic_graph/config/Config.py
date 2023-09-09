@@ -19,7 +19,8 @@ base_model_config = dict(
     to_date = '2023-06-01 00:00:00',
     test_days_gap=30,
     graph_threshold = 10,
-    graph_limit_distance = 0
+    graph_limit_distance = 0,
+    combine_graph = False
 )
 base_temporal_features = dict(
     year = 'passthrough',
@@ -115,6 +116,15 @@ def get_configs_graphs_study():
     config6 = copy.deepcopy(config)
     config6['graph_threshold'] = -1
     config6['graph_limit_distance'] = 0.15
+    config7 = copy.deepcopy(config)
+    config7['combine_graph'] = True
+    config7['graph_limit_distance'] = 0.05
+    config8 = copy.deepcopy(config)
+    config8['combine_graph'] = True
+    config8['graph_limit_distance'] = 0.10
+    config9 = copy.deepcopy(config)
+    config9['combine_graph'] = True
+    config9['graph_limit_distance'] = 0.15
     return dict(
         c1 = config1,
         c2 = config2,
@@ -122,4 +132,7 @@ def get_configs_graphs_study():
         c4 = config4,
         c5 = config5,
         c6 = config6,
+        c7 = config7,
+        c8 = config8,
+        c9 = config9,
     )   

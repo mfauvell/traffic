@@ -6,15 +6,15 @@ import requests
 from tqdm import tqdm
 from traffic_graph.traffic_graph.model import TrafficDataset
 
-def get_graph(selectedPoints, selectedPointsToIndex, threshold = 10, limitDistance = 0.01):
+def get_graph(selectedPoints, selectedPointsToIndex, threshold = 10, limitDistance = 0.01, ignoreLimit = False):
     print('Crating graph:')
-    matrix = get_matrix_distances(selectedPoints, threshold)
+    matrix = get_matrix_distances(selectedPoints, threshold, ignoreLimit)
     weights = get_weigth_stack(matrix, limitDistance)
     graph = create_graph_dataset(weights, selectedPointsToIndex)
     print('Created graph')
     return graph
 
-def get_matrix_distances(selectedPoints, threshold = 10):
+def get_matrix_distances(selectedPoints, threshold = 10, ignoreLimit = False):
     print("Calculation matrix distances:\t")
     # Get for each point the distances to others
     pointsDistances = dict()
@@ -49,7 +49,7 @@ def get_matrix_distances(selectedPoints, threshold = 10):
                             selectedPoints[minPoint]
                             ),2)
                         limit = round(selectedPointDistances[additionalPoint] + (selectedPointDistances[additionalPoint] * (threshold/100)),2)
-                        if (calculatedDistance <= limit):
+                        if (calculatedDistance <= limit or ignoreLimit):
                             distances.loc[selectedPoint, additionalPoint] = calculatedDistance
                         selectedPointDistances.pop(additionalPoint)
     return distances
