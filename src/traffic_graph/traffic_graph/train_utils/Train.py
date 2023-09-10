@@ -87,9 +87,13 @@ def make_train_alt(arrx, arry, graph, fold, config, path, logPath):
     with open(logPath, 'a') as f:
         f.write("Training finished\n")
     # save mae and mes
-    with open(f"{path}/loss_train.pkl", "wb") as f:
+    with open(f"{path}/maes_train.pkl", "wb") as f:
         pickle.dump(train_maes, f)
-    with open(f"{path}/loss_test.pkl", "wb") as f:
+    with open(f"{path}/mses_train.pkl", "wb") as f:
+        pickle.dump(train_mses, f)
+    with open(f"{path}/maes_test.pkl", "wb") as f:
+        pickle.dump(test_maes, f)
+    with open(f"{path}/mses_test.pkl", "wb") as f:
         pickle.dump(test_mses, f)
 
     return dcrnn
@@ -186,9 +190,13 @@ def make_train(arrx, arry, graph, time_gaps, dates, train_time, config, path, lo
     with open(logPath, 'a') as f:
         f.write("Training finished\n")
     # save mae and mes
-    with open(f"{path}/loss_train.pkl", "wb") as f:
+    with open(f"{path}/maes_train.pkl", "wb") as f:
         pickle.dump(train_maes, f)
-    with open(f"{path}/loss_test.pkl", "wb") as f:
+    with open(f"{path}/mses_train.pkl", "wb") as f:
+        pickle.dump(train_mses, f)
+    with open(f"{path}/maes_test.pkl", "wb") as f:
+        pickle.dump(test_maes, f)
+    with open(f"{path}/mses_test.pkl", "wb") as f:
         pickle.dump(test_mses, f)
 
     return dcrnn
