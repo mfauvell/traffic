@@ -18,8 +18,8 @@ base_model_config = dict(
     from_date = '2019-01-01 00:00:00',
     to_date = '2023-06-01 00:00:00',
     test_days_gap=30,
-    graph_threshold = 10,
-    graph_limit_distance = 0,
+    graph_threshold = -1,
+    graph_limit_distance = 0.1,
     combine_graph = False
 )
 base_temporal_features = dict(
@@ -93,9 +93,9 @@ def get_configs_train():
     return dict(
         c1 = base_model_config | drop_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features,
         c2 = base_model_config | base_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features,
-        c3 = base_model_config | drop_temporal_features | base_calendar_features | drop_traffic_features |drop_meteo_features,
-        c4 = base_model_config | drop_temporal_features | drop_calendar_features | base_traffic_features |drop_meteo_features,
-        c5 = base_model_config | drop_temporal_features | drop_calendar_features | drop_traffic_features |base_meteo_features,
+        c3 = base_model_config | base_temporal_features | base_calendar_features | drop_traffic_features |drop_meteo_features,
+        c4 = base_model_config | base_temporal_features | drop_calendar_features | base_traffic_features |drop_meteo_features,
+        c5 = base_model_config | base_temporal_features | drop_calendar_features | drop_traffic_features |base_meteo_features,
     )
 
 def get_configs_graphs_study():
