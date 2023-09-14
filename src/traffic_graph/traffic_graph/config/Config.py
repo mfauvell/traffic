@@ -90,12 +90,29 @@ drop_meteo_features = dict(
 )
 
 def get_configs_train():
+    config6 = base_model_config | base_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features
+    config6['prematch'] = 'passthrough'
+    config6['match'] = 'passthrough' 
+    config6['postmatch'] = 'passthrough' 
+    config7 = base_model_config | base_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features
+    config7['rain'] = 'passthrough'
+    config7['temperature'] = 'passthrough'
+    config8 = base_model_config | base_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features
+    config8['rain'] = 'ordinal'
+    config8['temperature'] = 'passthrough'
+    config9 = base_model_config | base_temporal_features | base_calendar_features | drop_traffic_features |drop_meteo_features
+    config9['day_type'] = 'one_hot'
+    config9['season'] = 'one_hot'
     return dict(
         c1 = base_model_config | drop_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features,
         c2 = base_model_config | base_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features,
         c3 = base_model_config | base_temporal_features | base_calendar_features | drop_traffic_features |drop_meteo_features,
         c4 = base_model_config | base_temporal_features | drop_calendar_features | base_traffic_features |drop_meteo_features,
         c5 = base_model_config | base_temporal_features | drop_calendar_features | drop_traffic_features |base_meteo_features,
+        c6 = config6,
+        c7 = config7,
+        c8 = config8,
+        c9 = config9
     )
 
 def get_configs_graphs_study():
