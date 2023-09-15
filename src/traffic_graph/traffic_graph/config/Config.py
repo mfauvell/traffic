@@ -171,4 +171,6 @@ def get_final_config():
     config['work_office_day'] = 'passthrough'
     config['rain'] = 'ordinal'
     config['temperature'] = 'passthrough'
+    config['school_holiday'] = 'passthrough'
+    config['school_day'] = 'passthrough'
     return dict(c1 = config)
