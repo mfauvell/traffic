@@ -173,4 +173,12 @@ def get_final_config():
     config['temperature'] = 'passthrough'
     config['school_holiday'] = 'passthrough'
     config['school_day'] = 'passthrough'
-    return dict(c1 = config)
+    config2 = base_model_config | base_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features
+    config2['prematch'] = 'passthrough'
+    config2['match'] = 'passthrough' 
+    config2['postmatch'] = 'passthrough'
+    config2['rain'] = 'ordinal'
+    config2['temperature'] = 'passthrough'
+    config2['school_holiday'] = 'passthrough'
+    config2['school_day'] = 'passthrough'
+    return dict(c1 = config, c2 = config2)

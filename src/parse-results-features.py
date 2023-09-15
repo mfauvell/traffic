@@ -14,7 +14,8 @@ resultCollection = trafficDb['featuresStudyFirst']
 resultCollection.drop()
 limitFold = 0
 figureMaes, axMae = plt.subplots(figsize=(9, 9))
-figureSeparatedMaes, axSeparatedMae = plt.subplots(4,4, sharey=True)
+figureSeparatedMaes, axSeparatedMae = plt.subplots(4,3, sharey=True)
+axSeparatedMae[3,2].remove()
 indexX = 0
 indexY = 0 
 cycler = cycle(cm.tab10.colors)
@@ -82,11 +83,14 @@ for config in [dirItem for dirItem in os.listdir(basePath) if os.path.isdir(base
             )
         )
     color = next(cycler)
+    configNumber = config[-1]
+    if (len(config) > 2):
+        configNumber = config[-2:]
     axSeparatedMae[indexX, indexY].plot(names,valuesMaes, color=color)
-    axSeparatedMae[indexX, indexY].set_title('Config: ' + config[-1])
-    axMae.plot(names,valuesMaes, label="Config"+config[-1])
+    axSeparatedMae[indexX, indexY].set_title('Config: ' + configNumber)
+    axMae.plot(names,valuesMaes, label="Config"+configNumber)
     indexY = indexY + 1
-    if indexY == 4:
+    if indexY == 3:
         indexY = 0
         indexX = indexX + 1
         if indexX == 4:
@@ -94,9 +98,9 @@ for config in [dirItem for dirItem in os.listdir(basePath) if os.path.isdir(base
     # print(resultArray)
     if (len(resultArray) > 0):
         resultCollection.insert_many(resultArray)
+# axSeparatedMae[3,2].remove()
 for ax in axSeparatedMae.flat:
     ax.set(xlabel='fold')
-
 # Hide x labels and tick labels for top plots and y ticks for right plots.
 for ax in axSeparatedMae.flat:
     ax.label_outer()
