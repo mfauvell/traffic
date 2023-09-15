@@ -14,7 +14,7 @@ resultCollection = trafficDb['featuresStudyFirst']
 resultCollection.drop()
 limitFold = 0
 figureMaes, axMae = plt.subplots(figsize=(9, 9))
-figureSeparatedMaes, axSeparatedMae = plt.subplots(3,3, sharey=True)
+figureSeparatedMaes, axSeparatedMae = plt.subplots(4,4, sharey=True)
 indexX = 0
 indexY = 0 
 cycler = cycle(cm.tab10.colors)
@@ -86,10 +86,10 @@ for config in [dirItem for dirItem in os.listdir(basePath) if os.path.isdir(base
     axSeparatedMae[indexX, indexY].set_title('Config: ' + config[-1])
     axMae.plot(names,valuesMaes, label="Config"+config[-1])
     indexY = indexY + 1
-    if indexY == 3:
+    if indexY == 4:
         indexY = 0
         indexX = indexX + 1
-        if indexX == 3:
+        if indexX == 4:
             indexX = 0
     # print(resultArray)
     if (len(resultArray) > 0):

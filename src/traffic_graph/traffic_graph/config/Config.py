@@ -161,3 +161,14 @@ def get_configs_graphs_study():
         c8 = config8,
         c9 = config9,
     )   
+
+def get_final_config():
+    config = base_model_config | base_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features
+    config['prematch'] = 'passthrough'
+    config['match'] = 'passthrough' 
+    config['postmatch'] = 'passthrough'
+    config['bank_holiday'] = 'passthrough'
+    config['work_office_day'] = 'passthrough'
+    config['rain'] = 'ordinal'
+    config['temperature'] = 'passthrough'
+    return dict(c1 = config)
