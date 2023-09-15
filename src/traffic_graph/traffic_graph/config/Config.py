@@ -103,6 +103,12 @@ def get_configs_train():
     config9 = base_model_config | base_temporal_features | base_calendar_features | drop_traffic_features |drop_meteo_features
     config9['day_type'] = 'one_hot'
     config9['season'] = 'one_hot'
+    config10 = base_model_config | base_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features
+    config10['bank_holiday'] = 'passthrough'
+    config10['work_office_day'] = 'passthrough'
+    config11 = base_model_config | base_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features
+    config11['school_holiday'] = 'passthrough'
+    config11['school_day'] = 'passthrough'
     return dict(
         c1 = base_model_config | drop_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features,
         c2 = base_model_config | base_temporal_features | drop_calendar_features | drop_traffic_features |drop_meteo_features,
@@ -112,7 +118,9 @@ def get_configs_train():
         c6 = config6,
         c7 = config7,
         c8 = config8,
-        c9 = config9
+        c9 = config9,
+        c10 = config10,
+        c11 = config11
     )
 
 def get_configs_graphs_study():
