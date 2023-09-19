@@ -10,94 +10,6 @@ from matplotlib import pyplot as plt
 import pickle
 batch_cnt = [0]
 
-def make_train_alt(arrx, arry, graph, fold, config, path, logPath):
-    print('Starting Train')
-    print('Fold number: ' + str(fold))
-    device = get_device(config)
-    arrxTrain, arryTrain, arrxTest, arryTest = tg.data_prepare.get_train_test_arrays_alt(arrx, arry, fold, config)
-    trainDataset = tg.model.SnapShotDataset(arrxTrain, arryTrain)
-    testDataset = tg.model.SnapShotDataset(arrxTest, arryTest)
-    ## save datasets
-    #TODO:
-    trainLoader = DataLoader(trainDataset, batch_size=config['batch_size'], num_workers=config['num_workers'], shuffle=True)
-    testLoader = DataLoader(testDataset, batch_size=config['batch_size'], num_workers=config['num_workers'], shuffle=True)
-    with open(logPath, 'a') as f:
-        print("Shape of train_x:", trainDataset.x.shape, file=f)
-        print("Shape of train_y:", trainDataset.y.shape, file=f)
-        print("Shape of test_x:", testDataset.x.shape, file=f)
-        print("Shape of test_y:", testDataset.y.shape, file=f)
-    print("Shape of train_x:", trainDataset.x.shape)
-    print("Shape of train_y:", trainDataset.y.shape)
-    print("Shape of test_x:", testDataset.x.shape)
-    print("Shape of test_y:", testDataset.y.shape)
-    seq_len = trainDataset.x.shape[1]
-    in_feats = trainDataset.x.shape[-1]
-    normalizer = tg.model.NormalizationLayer(trainDataset.min, trainDataset.max)
-    batch_g = dgl.batch([graph] * config['batch_size']).to(device)
-    out_gs, in_gs = tg.model.DiffConv.attach_graph(batch_g, config['diffsteps'])
-    net = partial(tg.model.DiffConv, k=config['diffsteps'], in_graph_list=in_gs, out_graph_list=out_gs, dir=config["direction"])
-    dcrnn = tg.model.GraphRNN(in_feats=in_feats,
-        out_feats=config['out_feats'],
-        seq_len=seq_len,
-        num_layers=config['num_layers'],
-        net=net,
-        decay_steps=config['decay_steps']).to(device)
-    optimizer = torch.optim.Adam(dcrnn.parameters(), lr=config['lr'])
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
-    loss_fn = masked_mae_loss
-    train_maes = []
-    train_mses = []
-    test_maes = []
-    test_mses = []
-    for e in range(config['epochs']):
-        train(dcrnn, graph, trainLoader, optimizer, scheduler, normalizer, loss_fn, device, config['batch_size'], config['max_grad_norm'], config['minimum_lr'])
-        train_mae, train_mse = eval(dcrnn, graph, trainLoader, normalizer, loss_fn, device, config['batch_size'])
-        test_mae, test_mse = eval(dcrnn, graph, testLoader, normalizer, loss_fn, device, config['batch_size'])
-        print(f"Epoch: {e} Train MAE: {train_mae} Train MSE: {train_mse} Test MAE: {test_mae} Test MSE: {test_mse}")
-        with open(logPath, 'a') as f:
-            print(f"Epoch: {e} Train MAE: {train_mae} Train MSE: {train_mse} Test MAE: {test_mae} Test MSE: {test_mse}", file=f)
-        train_maes.append(train_mae)
-        train_mses.append(train_mse)
-        test_maes.append(test_mae)
-        test_mses.append(test_mse)
-
-        fig, ax = plt.subplots(figsize=(14, 4))
-        ax.plot(train_maes, label="train")
-        ax.plot(test_maes, label="test")
-        plt.legend()
-        plt.savefig(f"{path}/learning_curve_mae.svg")
-        plt.close(fig)
-
-        fig, ax = plt.subplots(figsize=(14, 4))
-        ax.plot(train_mses, label="train")
-        ax.plot(test_mses, label="test")
-        plt.legend()
-        plt.savefig(f"{path}/learning_curve_mse.svg")
-        plt.close(fig)
-
-        ### save model
-        torch.save(dcrnn.state_dict(), f"{path}/model{e}.pt")
-
-        if len(train_maes) >= 3:
-            if all([train_mae > previous_mae for previous_mae in train_maes[-3:-1]]):
-                break
-            if all([train_mse > previous_mse for previous_mse in train_mses[-3:-1]]):
-                break
-    print("Training finished")
-    with open(logPath, 'a') as f:
-        f.write("Training finished\n")
-    # save mae and mes
-    with open(f"{path}/maes_train.pkl", "wb") as f:
-        pickle.dump(train_maes, f)
-    with open(f"{path}/mses_train.pkl", "wb") as f:
-        pickle.dump(train_mses, f)
-    with open(f"{path}/maes_test.pkl", "wb") as f:
-        pickle.dump(test_maes, f)
-    with open(f"{path}/mses_test.pkl", "wb") as f:
-        pickle.dump(test_mses, f)
-
-    return dcrnn
-
 def make_train(arrx, arry, graph, time_gaps, dates, train_time, config, path, logPath):
     print('Starting Train')
     print('Train until: ' + train_time)
@@ -130,14 +42,8 @@ def make_train(arrx, arry, graph, time_gaps, dates, train_time, config, path, lo
         num_layers=config['num_layers'],
         net=net,
         decay_steps=config['decay_steps']).to(device)
-    # reset_parameters(net)
     optimizer = torch.optim.Adam(dcrnn.parameters(), lr=config['lr'])
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
-    #Save state of optimizer and model
-    # stateModel = dcrnn.state_dict()
-    # torch.save(dcrnn.state_dict(), f"{path}/model_init.pt")
-    # stateOptim = optimizer.state_dict()
-    # print(stateModel)
     loss_fn = masked_mae_loss
     train_maes = []
     train_mses = []
@@ -178,14 +84,6 @@ def make_train(arrx, arry, graph, time_gaps, dates, train_time, config, path, lo
                 break
             if all([train_mse > previous_mse for previous_mse in train_mses[-3:-1]]):
                 break
-    # optimizer.load_state_dict(torch.load(stateOptim))
-    # dcrnn.load_state_dict(torch.load(f"{path}/model_init.pt"))
-    # dcrnn.to(device)
-    # del optimizer
-    # del scheduler
-    # del net
-    # del out_gs
-    # del in_gs
     print("Training finished")
     with open(logPath, 'a') as f:
         f.write("Training finished\n")

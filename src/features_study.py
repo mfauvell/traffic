@@ -45,12 +45,10 @@ with open(logPath, 'a') as f:
     f.write('Get data\n')
 arrx, arry, time_gaps, dates = tg.data_prepare.get_data_dataframes(config, selectedPointsToIndex, trafficDb)
 #save dataframes
-#TODO: For now no save this, we can recreate from data
 path = training_basepath + "/fold" + str(fold) 
 if not os.path.exists(path):
     os.mkdir(path)
 try:
-    # dcrnn = tg.train_utils.make_train_alt(arrx, arry, graph, fold, config, path, logPath)
     dcrnn = tg.train_utils.make_train(arrx, arry, graph, time_gaps, dates, tg.data_prepare.get_training_date_from_fold(fold), config, path, logPath)
 except Exception as err:
     print(f"Unexpected {err=}, {type(err)=}")
